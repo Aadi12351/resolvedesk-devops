@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: resolvedesk
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resolvedesk
+  namespace: resolvedesk
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: resolvedesk}
+  template:
+    metadata:
+      labels: {app: resolvedesk}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+        - name: app
+          image: REPLACE_WITH_ECR_IMAGE_URI
+          ports: [{containerPort: 8000}]
+          envFrom:
+            - secretRef: {name: resolvedesk-env}
+          env:
+            - name: COOKIE_SECURE
+              value: "true"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          startupProbe:
+            httpGet: {path: /health/ready, port: 8000}
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet: {path: /health/ready, port: 8000}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /health/live, port: 8000}
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: resolvedesk
+  namespace: resolvedesk
+spec:
+  selector: {app: resolvedesk}
+  ports: [{port: 80, targetPort: 8000}]
+  type: ClusterIP

@@ -1,0 +1,8 @@
+FROM python:3.13-slim
+WORKDIR /srv
+COPY requirements*.txt ./
+RUN pip install --no-cache-dir -r requirements-dev.txt
+COPY app ./app
+COPY tests ./tests
+ENV PYTHONDONTWRITEBYTECODE=1
+CMD ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--junitxml=/reports/tests.xml"]

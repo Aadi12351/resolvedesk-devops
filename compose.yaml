@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: resolvedesk
+      POSTGRES_USER: resolvedesk
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run setup_env.py first}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resolvedesk -d resolvedesk"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?Run setup_env.py first}
+      DATABASE_URL: postgresql+psycopg://resolvedesk:${POSTGRES_PASSWORD}@db:5432/resolvedesk
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  postgres-data:

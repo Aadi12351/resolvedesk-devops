@@ -1,0 +1,5 @@
+ResolveDesk validation
+9 pytest tests passed against disposable SQLite.
+Python source compilation passed.
+Environment generator and existing-file preservation passed.
+Docker/PostgreSQL/EKS deployment not executed in delivery environment.
